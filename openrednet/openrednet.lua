@@ -25,7 +25,8 @@ end
 
 function lib:host(hn, func, res)
  local per = peripheral.find("modem", rednet.open)
- lib.hostname = hn or os.getComputerID()
+ self.hostname = hn or os.getComputerID()
+ rednet.host(self.hostname)
  self.get = func or function() end
  self.onmessage = res or function() end
  parallel.waitForAll(func, function()
@@ -42,6 +43,7 @@ function lib:listenShake()
    if not self.blacklist[id] then
     -- Ignore connection attempts from blacklisted IPs
     rednet.send(id, self.pubKey, "orn_shake")
+    print("Handshake initiated with "..id)
     self.sockets[id] = self.x25519.exchange(self.privKey, cpubKey)
    end
   end
