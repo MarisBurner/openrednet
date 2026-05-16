@@ -6,13 +6,15 @@
 local x25519 = require("ccryptolib.x25519")
 local random = require("ccryptolib.random")
 local aead = require("ccryptolib.aead")
+local parseUrl = require("parseUrl")
 local lib = {
  x25519 = x25519,
  random = random,
  aead = aead,
  sockets = {},
  blacklist = {},
- serializer = {}
+ serializer = {},
+ parseUrl = parseUrl
 }
 
 -- this initializes the randomizer
@@ -58,9 +60,9 @@ function lib.slice(tbl, start, finish)
 end
 
 function lib:UrlGetReq(url)
- url = self.split(tostring(url),"/")
- if not self:connect(url[1]) then return false end
- self:sendTable(url[1], {get = self.slice(url,2,#url)})
+ url = self.parseUrl("orn://www."..tostring(url))
+ if not url or not self:connect(url.tld) then return false end
+ self:sendTable(url.tld, {get = url})
  return true
 end
 
