@@ -20,6 +20,7 @@ lib.privKey = random.random(32)
 lib.pubKey = x25519.publicKey(lib.privKey)
 
 function lib:isConnected(ip)
+ ip = tonumber(ip)
  return self.sockets[ip] ~= nil
 end
 
@@ -71,6 +72,7 @@ function lib:listen()
 end
 
 function lib:send(ip, message, unencryptedMessage)
+ ip = tonumber(ip)
  if self.sockets[ip] then
   unencryptedMessage = unencryptedMessage or ""
   message = tostring(message)
@@ -82,11 +84,13 @@ function lib:send(ip, message, unencryptedMessage)
 end
 
 function lib:disconnect(ip)
+ ip = tonumber(ip)
  self.sockets[ip] = nil
  rednet:send(ip, "disconnect")
 end
 
 function lib:connect(ip)
+ ip = tonumber(ip)
  --Secure a safe connection through handshakes and key exchange
  local id, msg
 
