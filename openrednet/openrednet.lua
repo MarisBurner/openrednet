@@ -1,3 +1,8 @@
+-- OpenRedNet
+-- Secure Websocketting Library
+-- Made by: Cali
+-- Built on: ccryptolib
+
 local x25519 = require("ccryptolib.x25519")
 local random = require("ccryptolib.random")
 local aead = require("ccryptolib.aead")
@@ -7,6 +12,7 @@ local lib = {
  aead = aead,
  sockets = {},
  blacklist = {},
+ serializer = {}
 }
 
 -- this initializes the randomizer
@@ -19,16 +25,74 @@ http.websocket(data.url).close()
 lib.privKey = random.random(32)
 lib.pubKey = x25519.publicKey(lib.privKey)
 
+function lib.indexOf(arr, val)
+ for i, v in ipairs(arr) do
+  if v == val then
+   return i
+  end
+ end
+ return nil
+end
+
+function lib.serializer:genTableString(val, name, skipnewlines, depth)
+ skipnewlines = skipnewlines or false
+ depth = depth or 0
+
+ local tmp = string.rep(" ", depth)
+
+ if name then tmp = tmp .. name .. " = " end
+
+ if type(val) == "table" then
+  tmp = tmp .. "{" .. (not skipnewlines and "\n" or "")
+
+  for k, v in pairs(val) do
+   tmp = tmp .. self:genTableString(v, k, skipnewlines, depth + 1) .. "," .. (not skipnewlines and "\n" or "")
+  end
+
+  tmp = tmp .. string.rep(" ", depth) .. "}"
+ elseif type(val) == "number" then
+  tmp = tmp .. tostring(val)
+ elseif type(val) == "string" then
+  tmp = tmp .. string.format("%q", val)
+ elseif type(val) == "boolean" then
+  tmp = tmp .. (val and "true" or "false")
+ else
+  tmp = tmp .. "\"[inserializeable datatype:" .. type(val) .. "]\""
+ end
+
+ return tmp
+end
+
+function lib.serializer:getTableFromString(val)
+ local fn, err = load("return " .. val, "sandbox", "t", {})
+ if fn then
+  local suc, res = pcall(fn)
+  return suc and res or {}
+ else
+  return {}
+ end
+end
+
 function lib:isConnected(ip)
- ip = tonumber(ip)
+ ip = self:getIP(ip)
  return self.sockets[ip] ~= nil
+end
+
+function lib:getIP(name)
+ local ip = name
+ local serv = rednet.lookup("orn_shake", tostring(name))
+ if serv then
+  ip = serv
+ end
+ ip = tonumber(ip)
+ if ip == nil then ip = -1 end
+ return ip
 end
 
 function lib:host(hn, func, res)
  local per = peripheral.find("modem", rednet.open)
- self.hostname = hn or os.getComputerID()
- rednet.host("orn_shake", tostring(self.hostname))
- rednet.host("orn", tostring(self.hostname))
+ self.hostname = tostring(hn or os.getComputerID())
+ rednet.host("orn_shake", self.hostname)
  self.get = func or function() end
  self.onmessage = res or function() end
  parallel.waitForAll(func, function()
@@ -55,7 +119,7 @@ function lib:listen()
  while true do
   local id, msg = rednet.receive("orn")
   if self.sockets[id] then
-   if msg == "disconnect" then
+   if msg == "_%disc" then
     -- Server requested disconnect, clean up socket
     self.sockets[id] = nil
    else
@@ -64,6 +128,7 @@ function lib:listen()
      -- Failed decryption, possible attack or corruption
      self:disconnect(id)
     else
+     if msg.unencryptedMessage == "_%tbs" then decrypted = lib.serializer:getTableFromString(decrypted) end
      self.onmessage(id, decrypted, msg.unencryptedMessage)
     end
    end
@@ -72,7 +137,7 @@ function lib:listen()
 end
 
 function lib:send(ip, message, unencryptedMessage)
- ip = tonumber(ip)
+ ip = self:getIP(ip)
  if self.sockets[ip] then
   unencryptedMessage = unencryptedMessage or ""
   message = tostring(message)
@@ -83,15 +148,19 @@ function lib:send(ip, message, unencryptedMessage)
  end
 end
 
+function lib:sendTable(ip, message)
+ self:send(ip, self.serializer:genTableString(message), "_%tbs")
+end
+
 function lib:disconnect(ip)
- ip = tonumber(ip)
+ ip = self:getIP(ip)
  self.sockets[ip] = nil
- rednet:send(ip, "disconnect")
+ rednet.send(ip, "_%disc")
 end
 
 function lib:connect(ip)
- ip = tonumber(ip)
  --Secure a safe connection through handshakes and key exchange
+ ip = self:getIP(ip)
  local id, msg
 
  -- Attempt Handshake
