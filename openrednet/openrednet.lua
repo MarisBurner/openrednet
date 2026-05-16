@@ -19,6 +19,10 @@ http.websocket(data.url).close()
 lib.privKey = random.random(32)
 lib.pubKey = x25519.publicKey(lib.privKey)
 
+function lib:isConnected(ip)
+ return self.sockets[ip] ~= nil
+end
+
 function lib:host(hn, func, res)
  local per = peripheral.find("modem", rednet.open)
  lib.hostname = hn or os.getComputerID()
