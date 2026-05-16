@@ -34,6 +34,36 @@ function lib.indexOf(arr, val)
  return nil
 end
 
+function lib.split(val,sep)
+ val = tostring(val)
+ sep = tostring(sep)
+ if sep == nil then
+    sep = "%s"
+  end
+  local t = {}
+  for str in string.gmatch(val, "([^"..sep.."]+)") do
+    table.insert(t, str)
+  end
+  return t
+end
+
+function lib.slice(tbl, start, finish)
+    local new = {}
+    local pos = 1
+    for i = start, finish do
+        new[pos] = tbl[i]
+        pos = pos + 1
+    end
+    return new
+end
+
+function lib:UrlGetReq(url)
+ url = self.split(tostring(url),"/")
+ if not self:connect(url[1]) then return false end
+ self:sendTable(url[1], {get = self.slice(url,2,#url)})
+ return true
+end
+
 function lib.serializer:genTableString(val)
  if type(val) ~= "table" then val = {} end
  return textutils.serialise(val, {allow_repetitions = true, compact = true})
