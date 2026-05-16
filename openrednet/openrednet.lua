@@ -27,6 +27,7 @@ function lib:host(hn, func, res)
  local per = peripheral.find("modem", rednet.open)
  self.hostname = hn or os.getComputerID()
  rednet.host("orn_shake", tostring(self.hostname))
+ rednet.host("orn", tostring(self.hostname))
  self.get = func or function() end
  self.onmessage = res or function() end
  parallel.waitForAll(func, function()
