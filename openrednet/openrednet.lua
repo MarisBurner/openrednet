@@ -44,7 +44,6 @@ function lib:listenShake()
    if not self.blacklist[id] then
     -- Ignore connection attempts from blacklisted IPs
     rednet.send(id, self.pubKey, "orn_shake")
-    print("Handshake initiated with "..id)
     self.sockets[id] = self.x25519.exchange(self.privKey, cpubKey)
    end
   end
