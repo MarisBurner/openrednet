@@ -1,5 +1,5 @@
 # openrednet
-A secure, intuitive websocketting system CC: Tweaked, built off of ccryptolib
+A secure, intuitive websocketting system for CC: Tweaked, built off of ccryptolib
 
 ## When you load the folder into a computer, you can run "./openrednet/setup.lua"
 
