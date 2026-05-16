@@ -1,7 +1,7 @@
 # openrednet
-A secure, intuitive websocketting system CC: Tweaked
+A secure, intuitive websocketting system CC: Tweaked, built off of ccryptolib
 
-When you load the folder into a computer, you can run "./openrednet/setup.lua"
+## When you load the folder into a computer, you can run "./openrednet/setup.lua"
 
 Load in the library using ```local openrednet = require("openrednet")```
 
