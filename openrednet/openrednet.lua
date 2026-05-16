@@ -73,6 +73,8 @@ end
 function lib:send(ip, message, unencryptedMessage)
  if self.sockets[ip] then
   unencryptedMessage = unencryptedMessage or ""
+  message = tostring(message)
+  unencryptedMessage = tostring(unencryptedMessage)
   local nonce = self.random.random(12)
   local encrypted, tag = self.aead.encrypt(self.sockets[ip], nonce, message, unencryptedMessage)
   rednet.send(ip, {encryptedMessage = encrypted, unencryptedMessage = unencryptedMessage, nonce = nonce, tag = tag}, "orn")
